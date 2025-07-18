@@ -2,8 +2,16 @@ import asyncio
 import yfinance as yf
 from telegram import Bot
 import os
+from flask import Flask
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # now using environment variable
+# Dummy Flask app to keep Render happy
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running."
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 USER_ID = 6170049666
 
 async def send_btc_signals():
@@ -11,7 +19,7 @@ async def send_btc_signals():
     prev_price = None
     running_pct = 0.0
 
-    for i in range(10000000):
+    while True:
         btc = yf.Ticker("BTC-USD")
         price = btc.info.get("regularMarketPrice")
 
@@ -43,5 +51,12 @@ async def send_btc_signals():
         await bot.send_message(chat_id=USER_ID, text=msg)
         await asyncio.sleep(300)
 
-if __name__ == "__main__":
-    asyncio.run(send_btc_signals())
+# Start the bot loop in the background
+def start_bot():
+    loop = asyncio.get_event_loop()
+    loop.create_task(send_btc_signals())
+
+start_bot()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
